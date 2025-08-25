@@ -1,8 +1,8 @@
-from flask import Flask, render_template
-from flask_login import LoginManager, UserMixin
+from flask import Flask, render_template, redirect, url_for, request
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Integer, String, Text,ForeignKey,DateTime
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column,relationship
+from sqlalchemy import Integer, String, Text, ForeignKey, DateTime
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from datetime import datetime
 app = Flask(__name__)
 login_manager = LoginManager()
@@ -61,5 +61,13 @@ def index():
 def statistics():
     active_page = "statistics"
     return render_template('statistics.html',active_page=active_page)
+
+@app.route('/login',methods=['GET','POST'])
+def login():
+    if current_user.is_authenticated:
+        return url_for('index')
+    return render_template('login.html')
+
+
 if __name__ == '__main__':
     app.run(debug=True)
