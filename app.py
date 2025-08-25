@@ -159,7 +159,7 @@ def add_application():
             db.session.add(new_application)
             db.session.commit()
 
-            flash('Application added successfully!', 'success')
+
             return redirect(url_for('applications'))
 
         except Exception as e:
