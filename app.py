@@ -5,7 +5,7 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Integer, String, Text, ForeignKey, DateTime
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from datetime import datetime
+from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
@@ -16,6 +16,9 @@ class Base(DeclarativeBase):
     pass
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 app.config['SECRET_KEY'] = "secret123"
+app.config["REMEMBER_COOKIE_DURATION"] = timedelta(days=15)
+#app.config["REMEMBER_COOKIE_SECURE"] = True
+app.config["REMEMBER_COOKIE_HTTPONLY"] = True
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
 
@@ -70,7 +73,19 @@ def statistics():
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
-    return render_template('login.html')
+    if request.method == "POST":
+        email = request.form['email']
+        password = request.form['password']
+        remember = request.form.get('remember')
+
+        user = User.query.filter_by(email=email).first()
+        if user and check_password_hash(user.password_hash,password):
+            login_user(user,remember=remember)
+            return redirect(url_for('index'))
+        else:
+            flash("Invalid email or password")
+            return redirect(url_for('login'))
+    return render_template('login.html',active_page="login")
 
 @app.route('/register',methods=['GET','POST'])
 def register():
@@ -82,14 +97,15 @@ def register():
         email=request.form['email'],
         password_hash=generate_password_hash(request.form['password'],salt_length=8)
         )
+        remember = request.form.get('remember')
         if db.session.query(User).filter_by(email=new_user.email).first():
             flash("Email already registered")
             return redirect(url_for('login'))
         db.session.add(new_user)
         db.session.commit()
-        login_user(new_user)
+        login_user(new_user,remember=remember)
         return redirect(url_for('index'))
-    return render_template('register.html')
+    return render_template('register.html',active_page="register")
 
 @app.route('/logout')
 @login_required

@@ -1,6 +1,6 @@
 <nav id="navbar" class="navbar navbar-expand-md navbar-dark fixed-top">
     <div class="container-fluid">
-        <a class="navbar-brand" href="#">
+        <a class="navbar-brand" href="{{ url_for('index') }}">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                  class="bi bi-file-earmark-person-fill" viewBox="0 0 16 16">
                 <path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0M9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1M11 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0m2 5.755V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-.245S4 12 8 12s5 1.755 5 1.755"/>
@@ -29,8 +29,16 @@
             </div>
             <div class="d-flex ms-auto">
                 {% if not current_user.is_authenticated %}
+                {% if active_page == "login" %}
+                <button type="button" onclick="location.href='{{ url_for('login') }}' " class="btn btn-outline-light active me-2">Login</button>
+                <button type="button" onclick="location.href='{{ url_for('register') }}' " class="btn btn-outline-light">Sign-up</button>
+                {% elif active_page == "register" %}
+                <button type="button" onclick="location.href='{{ url_for('login') }}' " class="btn btn-outline-light me-2">Login</button>
+                <button type="button" onclick="location.href='{{ url_for('register') }}' " class="btn btn-outline-light active">Sign-up</button>
+                {% else %}
                 <button type="button" onclick="location.href='{{ url_for('login') }}' " class="btn btn-outline-light me-2">Login</button>
                 <button type="button" onclick="location.href='{{ url_for('register') }}' " class="btn btn-warning">Sign-up</button>
+                {% endif %}
                 {% endif %}
                 {% if current_user.is_authenticated %}
                 <div class="dropdown text-end"><a href="#"
