@@ -12,7 +12,12 @@ def load_user(user_id):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    active_page = "index"
+    return render_template('index.html',active_page=active_page)
 
+@app.route('/statistics')
+def statistics():
+    active_page = "statistics"
+    return render_template('statistics.html',active_page=active_page)
 if __name__ == '__main__':
     app.run(debug=True)
