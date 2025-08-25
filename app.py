@@ -169,6 +169,39 @@ def add_application():
     return render_template('add_application.html')
 
 
+
+@app.route('/edit-application/<int:id>',methods=['GET','POST'])
+def edit_application(id):
+    if not current_user.is_authenticated:
+        flash("You need to be logged in to edit an existing application", 'danger')
+        return redirect(url_for('login'))
+    application = Application.query.get(id)
+    return render_template("edit_application.html",application=application)
+
+
+
+
+@app.route('/applications/<int:id>',methods=['GET','POST'])
+def view_application(id):
+    if not current_user.is_authenticated:
+        flash("You need to be logged in to view an existing application", 'danger')
+        return redirect(url_for('login'))
+    application = Application.query.get(id)
+    return render_template("view_application.html",application=application)
+
+
+
+@app.route('/delete-application/<int:id>',methods=['GET','POST'])
+def delete_application(id):
+    if not current_user.is_authenticated:
+        flash("You need to be logged in to delete an existing application", 'danger')
+        return redirect(url_for('login'))
+    application = Application.query.get(id)
+    db.session.delete(application)
+    db.session.commit()
+    return redirect(url_for('applications'))
+
+
 @app.route('/logout')
 @login_required
 def logout():
