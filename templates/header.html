@@ -5,61 +5,53 @@
                  class="bi bi-file-earmark-person-fill" viewBox="0 0 16 16">
                 <path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0M9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1M11 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0m2 5.755V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-.245S4 12 8 12s5 1.755 5 1.755"/>
             </svg>
-            Job Application Tracker</a>
+            Job Application Tracker
+        </a>
+
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
                 aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
 
         <div class="collapse navbar-collapse" id="navbarCollapse">
-            <div class="flex-grow-1 d-flex justify-content-center">
-                <ul class="navbar-nav mb-2 mb-md-0 d-flex flex-row">
-                    {% if active_page == "index" %}
-                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="{{ url_for('index') }}">Home</a></li>
-                    {% else %}
-                    <li class="nav-item"><a class="nav-link" aria-current="page" href="{{ url_for('index') }}">Home</a></li>
-                    {% endif %}
-                    {% if active_page == "applications" %}
-                    <li class="nav-item"><a class="nav-link active" aria-disabled="true" href="{{ url_for('applications') }}">My applications</a></li>
-                    {% else %}
-                    <li class="nav-item"><a class="nav-link" aria-disabled="true" href="{{ url_for('applications') }}">My applications</a></li>
-                    {% endif %}
-                    {% if active_page == "statistics" %}
-                    <li class="nav-item"><a class="nav-link active" href="{{ url_for('statistics') }}">Statistics</a></li>
-                    {% else %}
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('statistics') }}">Statistics</a></li>
-                    {% endif %}
+            <!-- Przyciski nawigacyjne po lewej -->
+            <ul class="navbar-nav me-auto mb-2 mb-md-0">
+                <li class="nav-item">
+                    <a class="nav-link {% if active_page == 'index' %}active{% endif %}" href="{{ url_for('index') }}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_page == 'applications' %}active{% endif %}" href="{{ url_for('applications') }}">My applications</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_page == 'statistics' %}active{% endif %}" href="{{ url_for('statistics') }}">Statistics</a>
+                </li>
+            </ul>
 
-                </ul>
-            </div>
-            <div class="d-flex ms-auto">
+            <!-- Login/Signup po prawej -->
+            <div class="d-flex">
                 {% if not current_user.is_authenticated %}
-                {% if active_page == "login" %}
-                <button type="button" onclick="location.href='{{ url_for('login') }}' " class="btn btn-outline-light active me-2">Login</button>
-                <button type="button" onclick="location.href='{{ url_for('register') }}' " class="btn btn-outline-light">Sign-up</button>
-                {% elif active_page == "register" %}
-                <button type="button" onclick="location.href='{{ url_for('login') }}' " class="btn btn-outline-light me-2">Login</button>
-                <button type="button" onclick="location.href='{{ url_for('register') }}' " class="btn btn-outline-light active">Sign-up</button>
+                    <button type="button" onclick="location.href='{{ url_for('login') }}'"
+                            class="btn btn-outline-light me-2 {% if active_page == 'login' %}active{% endif %}">
+                        Login
+                    </button>
+                    <button type="button" onclick="location.href='{{ url_for('register') }}'"
+                            class="btn {% if active_page == 'register' %}btn-outline-light active{% else %}btn-warning{% endif %}">
+                        Sign-up
+                    </button>
                 {% else %}
-                <button type="button" onclick="location.href='{{ url_for('login') }}' " class="btn btn-outline-light me-2">Login</button>
-                <button type="button" onclick="location.href='{{ url_for('register') }}' " class="btn btn-warning">Sign-up</button>
-                {% endif %}
-                {% endif %}
-                {% if current_user.is_authenticated %}
-                <div class="dropdown text-end"><a href="#"
-                                                  class="d-block link-body-emphasis text-decoration-none dropdown-toggle"
-                                                  data-bs-toggle="dropdown" aria-expanded="false"> <img
-                        src="https://github.com/mdo.png" alt="mdo" width="32" height="32" class="rounded-circle"> </a>
-                    <ul class="dropdown-menu dropdown-menu-end text-small">
-                        <li><a class="dropdown-item" href="#">New project...</a></li>
-                        <li><a class="dropdown-item" href="#">Settings</a></li>
-                        <li><a class="dropdown-item" href="#">Profile</a></li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li><a class="dropdown-item" href="{{ url_for('logout') }}">Sign out</a></li>
-                    </ul>
-                </div>
+                    <div class="dropdown">
+                        <a href="#" class="d-block link-body-emphasis text-decoration-none dropdown-toggle"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="https://github.com/mdo.png" alt="mdo" width="32" height="32" class="rounded-circle">
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end text-small">
+                            <li><a class="dropdown-item" href="#">New project...</a></li>
+                            <li><a class="dropdown-item" href="#">Settings</a></li>
+                            <li><a class="dropdown-item" href="#">Profile</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">Sign out</a></li>
+                        </ul>
+                    </div>
                 {% endif %}
             </div>
         </div>
@@ -72,11 +64,11 @@
         background-color: transparent;
     }
 
-
     #navbar.scrolled {
         background-color: #0d6efd;
     }
 </style>
+
 <script>
     window.addEventListener('scroll', function () {
         const navbar = document.getElementById('navbar');
@@ -87,4 +79,3 @@
         }
     });
 </script>
-
