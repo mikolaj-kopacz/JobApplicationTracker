@@ -59,15 +59,26 @@ def load_user(user_id):
     return db.session.get(User,user_id)
 
 
+
+
+
 @app.route('/')
 def index():
     active_page = "index"
     return render_template('index.html',active_page=active_page)
 
+
+
+
+
 @app.route('/statistics')
 def statistics():
     active_page = "statistics"
     return render_template('statistics.html',active_page=active_page)
+
+
+
+
 
 @app.route('/login',methods=['GET','POST'])
 def login():
@@ -81,11 +92,15 @@ def login():
         user = User.query.filter_by(email=email).first()
         if user and check_password_hash(user.password_hash,password):
             login_user(user,remember=remember)
-            return redirect(url_for('index'))
+            return redirect(url_for("index"))
         else:
-            flash("Invalid email or password")
+            flash("Invalid email or password",'danger')
             return redirect(url_for('login'))
     return render_template('login.html',active_page="login")
+
+
+
+
 
 @app.route('/register',methods=['GET','POST'])
 def register():
@@ -99,13 +114,60 @@ def register():
         )
         remember = request.form.get('remember')
         if db.session.query(User).filter_by(email=new_user.email).first():
-            flash("Email already registered")
+            flash("Email already registered",'danger')
             return redirect(url_for('login'))
         db.session.add(new_user)
         db.session.commit()
         login_user(new_user,remember=remember)
         return redirect(url_for('index'))
     return render_template('register.html',active_page="register")
+
+
+
+
+
+@app.route('/applications',methods=['GET','POST'])
+def applications():
+    return render_template('applications.html',active_page="applications",applications=Application.query.all())
+
+
+
+
+@app.route('/add-application',methods=['GET','POST'])
+def add_application():
+    if not current_user.is_authenticated:
+        flash("You need to be logged in to add a new application",'danger')
+        return redirect(url_for('login'))
+    if request.method == "POST":
+        try:
+            date_string = request.form.get('date_applied')
+            date_applied = datetime.strptime(date_string, '%Y-%m-%d')
+
+            new_application = Application(
+                company_name=request.form.get('company_name'),
+                position=request.form.get('position'),
+                date_applied=date_applied,
+                status=request.form.get('status', 'pending'),
+                location=request.form.get('location') or None,
+                salary=request.form.get('salary') or None,
+                company_email=request.form.get('company_email') or None,
+                job_url=request.form.get('job_url') or None,
+                notes=request.form.get('notes') or None,
+                user_id=current_user.id
+            )
+
+            db.session.add(new_application)
+            db.session.commit()
+
+            flash('Application added successfully!', 'success')
+            return redirect(url_for('applications'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error adding application: {str(e)}', 'danger')
+            return redirect(url_for('add_application'))
+    return render_template('add_application.html')
+
 
 @app.route('/logout')
 @login_required

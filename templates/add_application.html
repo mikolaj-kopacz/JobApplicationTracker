@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Add New Application{% endblock %}
+{% block content %}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Add New Job Application</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('add_application') }}">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="company_name" class="form-label">Company Name *</label>
+                                <input type="text" class="form-control" id="company_name" name="company_name" required>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="position" class="form-label">Position *</label>
+                                <input type="text" class="form-control" id="position" name="position" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="date_applied" class="form-label">Date Applied *</label>
+                                <input type="date" class="form-control" id="date_applied" name="date_applied" 
+                                       value="{{ today }}" required>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="status" class="form-label">Status</label>
+                                <select class="form-select" id="status" name="status">
+                                    <option value="pending" selected>Pending</option>
+                                    <option value="interview">Interview Scheduled</option>
+                                    <option value="accepted">Accepted</option>
+                                    <option value="rejected">Rejected</option>
+                                    <option value="withdrawn">Withdrawn</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="location" class="form-label">Location</label>
+                                <input type="text" class="form-control" id="location" name="location" 
+                                       placeholder="e.g., New York, NY or Remote">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="salary" class="form-label">Salary Range</label>
+                                <input type="text" class="form-control" id="salary" name="salary" 
+                                       placeholder="e.g., $60,000 - $80,000">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="company_email" class="form-label">Company Email</label>
+                            <input type="email" class="form-control" id="company_email" name="company_email" 
+                                   placeholder="hr@company.com">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="job_url" class="form-label">Job Posting URL</label>
+                            <input type="url" class="form-control" id="job_url" name="job_url" 
+                                   placeholder="https://...">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                      placeholder="Any additional notes about this application..."></textarea>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Save Application
+                            </button>
+                            <a href="{{ url_for('applications') }}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
