@@ -1,9 +1,13 @@
-from flask import Flask, render_template, redirect, url_for, request
+from tkinter.dnd import dnd_start
+
+from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Integer, String, Text, ForeignKey, DateTime
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
+
 app = Flask(__name__)
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -49,7 +53,7 @@ with app.app_context():
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.get(user_id)
+    return db.session.get(User,user_id)
 
 
 @app.route('/')
@@ -65,9 +69,33 @@ def statistics():
 @app.route('/login',methods=['GET','POST'])
 def login():
     if current_user.is_authenticated:
-        return url_for('index')
+        return redirect(url_for('index'))
     return render_template('login.html')
 
+@app.route('/register',methods=['GET','POST'])
+def register():
+    if current_user.is_authenticated:
+        return url_for('index')
+    if request.method == "POST":
+        new_user = User(
+        name=request.form['name'],
+        email=request.form['email'],
+        password_hash=generate_password_hash(request.form['password'],salt_length=8)
+        )
+        if db.session.query(User).filter_by(email=new_user.email).first():
+            flash("Email already registered")
+            return redirect(url_for('login'))
+        db.session.add(new_user)
+        db.session.commit()
+        login_user(new_user)
+        return redirect(url_for('index'))
+    return render_template('register.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(debug=True)

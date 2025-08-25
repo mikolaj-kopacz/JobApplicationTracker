@@ -29,8 +29,8 @@
             </div>
             <div class="d-flex ms-auto">
                 {% if not current_user.is_authenticated %}
-                <button type="button" class="btn btn-outline-light me-2">Login</button>
-                <button type="button" class="btn btn-warning">Sign-up</button>
+                <button type="button" onclick="location.href='{{ url_for('login') }}' " class="btn btn-outline-light me-2">Login</button>
+                <button type="button" onclick="location.href='{{ url_for('register') }}' " class="btn btn-warning">Sign-up</button>
                 {% endif %}
                 {% if current_user.is_authenticated %}
                 <div class="dropdown text-end"><a href="#"
@@ -44,7 +44,7 @@
                         <li>
                             <hr class="dropdown-divider">
                         </li>
-                        <li><a class="dropdown-item" href="#">Sign out</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('logout') }}">Sign out</a></li>
                     </ul>
                 </div>
                 {% endif %}
