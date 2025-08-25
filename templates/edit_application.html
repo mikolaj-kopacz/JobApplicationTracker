@@ -5,7 +5,7 @@
 <div class="container mt-4">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <!-- Flash messages -->
+
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -23,7 +23,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('edit_application', id=application.id) }}">
-                        <!-- Company and Position -->
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="company_name" class="form-label fw-bold">Company Name *</label>
@@ -38,7 +38,6 @@
                             </div>
                         </div>
 
-                        <!-- Date and Status -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="date_applied" class="form-label fw-bold">Date Applied *</label>
@@ -68,7 +67,7 @@
                             </div>
                         </div>
 
-                        <!-- Location and Salary -->
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="location" class="form-label fw-bold">Location</label>
@@ -85,7 +84,7 @@
                             </div>
                         </div>
 
-                        <!-- Email -->
+
                         <div class="mb-3">
                             <label for="company_email" class="form-label fw-bold">Company Email</label>
                             <input type="email" class="form-control" id="company_email" name="company_email"
@@ -93,7 +92,7 @@
                                    placeholder="hr@company.com">
                         </div>
 
-                        <!-- Job URL -->
+
                         <div class="mb-3">
                             <label for="job_url" class="form-label fw-bold">Job Posting URL</label>
                             <div class="input-group">
@@ -104,14 +103,14 @@
                             </div>
                         </div>
 
-                        <!-- Notes -->
+
                         <div class="mb-4">
                             <label for="notes" class="form-label fw-bold">Notes</label>
                             <textarea class="form-control" id="notes" name="notes" rows="4"
                                       placeholder="Interview scheduled for next week, contact person: John Doe...">{{ application.notes or '' }}</textarea>
                         </div>
 
-                        <!-- Buttons -->
+
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <button type="submit" class="btn btn-success me-2">
