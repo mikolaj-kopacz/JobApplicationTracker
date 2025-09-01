@@ -12,23 +12,27 @@ app = Flask(__name__)
 login_manager = LoginManager()
 login_manager.init_app(app)
 
+
 class Base(DeclarativeBase):
     pass
+
+
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 app.config['SECRET_KEY'] = "secret123"
 app.config["REMEMBER_COOKIE_DURATION"] = timedelta(days=15)
-#app.config["REMEMBER_COOKIE_SECURE"] = True
+# app.config["REMEMBER_COOKIE_SECURE"] = True
 app.config["REMEMBER_COOKIE_HTTPONLY"] = True
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
 
-class User(UserMixin,db.Model):
+
+class User(UserMixin, db.Model):
     __tablename__ = 'user'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(250),nullable=False)
-    email: Mapped[str] = mapped_column(String(250),nullable=False)
-    password_hash: Mapped[str] = mapped_column(String(250),nullable=False)
+    name: Mapped[str] = mapped_column(String(250), nullable=False)
+    email: Mapped[str] = mapped_column(String(250), nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(250), nullable=False)
     applications = relationship("Application", back_populates="user")
 
 
@@ -48,39 +52,116 @@ class Application(db.Model):
 
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey('user.id'), nullable=False)
 
-
     user = relationship("User", back_populates="applications")
+
 
 with app.app_context():
     db.create_all()
 
+
 @login_manager.user_loader
 def load_user(user_id):
-    return db.session.get(User,user_id)
-
-
-
+    return db.session.get(User, user_id)
 
 
 @app.route('/')
 def index():
-    active_page = "index"
-    return render_template('index.html',active_page=active_page)
-
-
-
+    return render_template('index.html', active_page="index")
 
 
 @app.route('/statistics')
+@login_required
 def statistics():
-    active_page = "statistics"
-    return render_template('statistics.html',active_page=active_page)
+    user_applications = Application.query.filter_by(user_id=current_user.id).all()
+
+    total = len(user_applications)
+
+    status_counts = {}
+    for app in user_applications:
+        status_counts[app.status] = status_counts.get(app.status, 0) + 1
+
+    responded = sum(1 for app in user_applications if app.status != 'pending')
+    interviews = status_counts.get('interview', 0)
+    accepted = status_counts.get('accepted', 0)
+
+    response_rate = round((responded / total * 100), 1) if total > 0 else 0
+    interview_rate = round((interviews / total * 100), 1) if total > 0 else 0
+    success_rate = round((accepted / total * 100), 1) if total > 0 else 0
+
+    status_breakdown = []
+    for status, count in status_counts.items():
+        percentage = round((count / total * 100), 1) if total > 0 else 0
+        status_breakdown.append({
+            'name': status,
+            'count': count,
+            'percentage': percentage
+        })
 
 
+    from collections import Counter
+    company_counts = Counter(app.company_name for app in user_applications)
+    top_companies = [{'name': company, 'count': count}
+                     for company, count in company_counts.most_common(5)]
+
+    from datetime import datetime, timedelta
+    monthly_trend = []
+
+    for i in range(3):
+        month_start = datetime.now().replace(day=1) - timedelta(days=30 * i)
+        month_name = month_start.strftime('%B %Y')
+
+        month_apps = [app for app in user_applications
+                      if app.date_applied.month == month_start.month
+                      and app.date_applied.year == month_start.year]
+
+        month_data = {
+            'name': month_name,
+            'applications': len(month_apps),
+            'interviews': sum(1 for app in month_apps if app.status == 'interview'),
+            'offers': sum(1 for app in month_apps if app.status == 'accepted'),
+            'pending': sum(1 for app in month_apps if app.status == 'pending'),
+        }
+
+        if month_data['applications'] > 0:
+            month_data['pending_percent'] = round((month_data['pending'] / month_data['applications'] * 100), 1)
+            month_data['interview_percent'] = round((month_data['interviews'] / month_data['applications'] * 100), 1)
+            month_data['offer_percent'] = round((month_data['offers'] / month_data['applications'] * 100), 1)
+        else:
+            month_data['pending_percent'] = 0
+            month_data['interview_percent'] = 0
+            month_data['offer_percent'] = 0
+
+        monthly_trend.append(month_data)
+
+    import calendar
+    from collections import Counter
+
+    weekdays = [calendar.day_name[app.date_applied.weekday()] for app in user_applications]
+    most_active_day = Counter(weekdays).most_common(1)[0][0] if weekdays else 'N/A'
+
+    current_month = datetime.now().month
+    this_month_count = sum(1 for app in user_applications if app.date_applied.month == current_month)
+
+    this_week_count = sum(1 for app in user_applications
+                          if app.date_applied.date() >= datetime.now().date() - timedelta(days=7))
+
+    stats = {
+        'total': total,
+        'response_rate': response_rate,
+        'interview_rate': interview_rate,
+        'success_rate': success_rate,
+        'status_breakdown': status_breakdown,
+        'top_companies': top_companies,
+        'monthly_trend': monthly_trend,
+        'this_week_count': this_week_count,
+        'most_active_day': most_active_day,
+        'this_month_count': this_month_count
+    }
+
+    return render_template('statistics.html', stats=stats, active_page="statistics")
 
 
-
-@app.route('/login',methods=['GET','POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
@@ -90,53 +171,45 @@ def login():
         remember = request.form.get('remember')
 
         user = User.query.filter_by(email=email).first()
-        if user and check_password_hash(user.password_hash,password):
-            login_user(user,remember=remember)
+        if user and check_password_hash(user.password_hash, password):
+            login_user(user, remember=remember)
             return redirect(url_for("index"))
         else:
-            flash("Invalid email or password",'danger')
+            flash("Invalid email or password", 'danger')
             return redirect(url_for('login'))
-    return render_template('login.html',active_page="login")
+    return render_template('login.html', active_page="login")
 
 
-
-
-
-@app.route('/register',methods=['GET','POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
         return url_for('index')
     if request.method == "POST":
         new_user = User(
-        name=request.form['name'],
-        email=request.form['email'],
-        password_hash=generate_password_hash(request.form['password'],salt_length=8)
+            name=request.form['name'],
+            email=request.form['email'],
+            password_hash=generate_password_hash(request.form['password'], salt_length=8)
         )
         remember = request.form.get('remember')
         if db.session.query(User).filter_by(email=new_user.email).first():
-            flash("Email already registered",'danger')
+            flash("Email already registered", 'danger')
             return redirect(url_for('login'))
         db.session.add(new_user)
         db.session.commit()
-        login_user(new_user,remember=remember)
+        login_user(new_user, remember=remember)
         return redirect(url_for('index'))
-    return render_template('register.html',active_page="register")
+    return render_template('register.html', active_page="register")
 
 
-
-
-
-@app.route('/applications',methods=['GET','POST'])
+@app.route('/applications', methods=['GET', 'POST'])
 def applications():
-    return render_template('applications.html',active_page="applications",applications=Application.query.all())
+    return render_template('applications.html', active_page="applications", applications=Application.query.all())
 
 
-
-
-@app.route('/add-application',methods=['GET','POST'])
+@app.route('/add-application', methods=['GET', 'POST'])
 def add_application():
     if not current_user.is_authenticated:
-        flash("You need to be logged in to add a new application",'danger')
+        flash("You need to be logged in to add a new application", 'danger')
         return redirect(url_for('login'))
     if request.method == "POST":
         try:
@@ -159,7 +232,6 @@ def add_application():
             db.session.add(new_application)
             db.session.commit()
 
-
             return redirect(url_for('applications'))
 
         except Exception as e:
@@ -169,29 +241,26 @@ def add_application():
     return render_template('add_application.html')
 
 
-
-@app.route('/edit-application/<int:id>',methods=['GET','POST'])
+@app.route('/edit-application/<int:id>', methods=['GET', 'POST'])
 def edit_application(id):
     if not current_user.is_authenticated:
         flash("You need to be logged in to edit an existing application", 'danger')
         return redirect(url_for('login'))
     application = Application.query.get(id)
-    return render_template("edit_application.html",application=application)
+
+    return render_template("edit_application.html", application=application)
 
 
-
-
-@app.route('/applications/<int:id>',methods=['GET','POST'])
+@app.route('/applications/<int:id>', methods=['GET', 'POST'])
 def view_application(id):
     if not current_user.is_authenticated:
         flash("You need to be logged in to view an existing application", 'danger')
         return redirect(url_for('login'))
     application = Application.query.get(id)
-    return render_template("view_application.html",application=application)
+    return render_template("view_application.html", application=application)
 
 
-
-@app.route('/delete-application/<int:id>',methods=['GET','POST'])
+@app.route('/delete-application/<int:id>', methods=['GET', 'POST'])
 def delete_application(id):
     if not current_user.is_authenticated:
         flash("You need to be logged in to delete an existing application", 'danger')
@@ -207,6 +276,7 @@ def delete_application(id):
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
 
 if __name__ == '__main__':
     app.run(debug=True)

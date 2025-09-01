@@ -2,136 +2,244 @@
 {% block title %}Statistics{% endblock %}
 
 {% block content %}
-<div class="my-5">
-    <div class="p-5 text-center ">
-        <div class="container py-5"><h1 class="text-body-emphasis">Full-width jumbotron</h1>
-            <p class="col-lg-8 mx-auto lead">
-                This takes the basic jumbotron above and makes its background edge-to-edge with a
-                <code>.container</code> inside to align content. Similar to above, it's been recreated with built-in
-                grid and utility classes.
-            </p></div>
+
+<div class="container-fluid bg-body-tertiary py-4 mb-5">
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h1 class="display-6 fw-bold mb-0">Application Statistics</h1>
+                <p class="text-muted mb-0">Analyze your job search progress and trends</p>
+            </div>
+        </div>
     </div>
 </div>
-<div class="container table-responsive small">
-    <table class="table table-striped table-sm">
-        <thead>
-        <tr>
-            <th scope="col">#</th>
-            <th scope="col">Header</th>
-            <th scope="col">Header</th>
-            <th scope="col">Header</th>
 
-        </tr>
-        </thead>
-        <tbody>
-        <tr>
-            <td>1,001</td>
-            <td>random</td>
-            <td>data</td>
-            <td>placeholder</td>
-        </tr>
-        <tr>
-            <td>1,002</td>
-            <td>placeholder</td>
-            <td>irrelevant</td>
-            <td>visual</td>
-        </tr>
-        <tr>
-            <td>1,003</td>
-            <td>data</td>
-            <td>rich</td>
-            <td>dashboard</td>
-        </tr>
-        <tr>
-            <td>1,003</td>
-            <td>information</td>
-            <td>placeholder</td>
-            <td>illustrative</td>
-        </tr>
-        <tr>
-            <td>1,004</td>
-            <td>text</td>
-            <td>random</td>
-            <td>layout</td>
 
-        </tr>
-        <tr>
-            <td>1,005</td>
-            <td>dashboard</td>
-            <td>irrelevant</td>
-            <td>text</td>
-
-        </tr>
-        <tr>
-            <td>1,006</td>
-            <td>dashboard</td>
-            <td>illustrative</td>
-            <td>rich</td>
-
-        </tr>
-        <tr>
-            <td>1,007</td>
-            <td>placeholder</td>
-            <td>tabular</td>
-            <td>information</td>
-
-        </tr>
-        <tr>
-            <td>1,008</td>
-            <td>random</td>
-            <td>data</td>
-            <td>placeholder</td>
-        </tr>
-        <tr>
-            <td>1,009</td>
-            <td>placeholder</td>
-            <td>irrelevant</td>
-            <td>visual</td>
-
-        </tr>
-        <tr>
-            <td>1,010</td>
-            <td>data</td>
-            <td>rich</td>
-            <td>dashboard</td>
-
-        </tr>
-        <tr>
-            <td>1,011</td>
-            <td>information</td>
-            <td>placeholder</td>
-            <td>illustrative</td>
-
-        </tr>
-        <tr>
-            <td>1,012</td>
-            <td>text</td>
-            <td>placeholder</td>
-            <td>layout</td>
-
-        </tr>
-        <tr>
-            <td>1,013</td>
-            <td>dashboard</td>
-            <td>irrelevant</td>
-            <td>text</td>
-
-        </tr>
-        <tr>
-            <td>1,014</td>
-            <td>dashboard</td>
-            <td>illustrative</td>
-            <td>rich</td>
-
-        </tr>
-        <tr>
-            <td>1,015</td>
-            <td>random</td>
-            <td>tabular</td>
-            <td>information</td>
-
-        </tr>
-        </tbody>
-    </table>
+<div class="container mb-5">
+    <div class="row g-3">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Total Applications</h6>
+                            <h2 class="mb-0">{{ stats.total }}</h2>
+                        </div>
+                        <div class="text-primary">
+                            <i class="fas fa-briefcase fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Response Rate</h6>
+                            <h2 class="mb-0">{{ stats.response_rate }}%</h2>
+                        </div>
+                        <div class="text-success">
+                            <i class="fas fa-chart-line fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Interview Rate</h6>
+                            <h2 class="mb-0">{{ stats.interview_rate }}%</h2>
+                        </div>
+                        <div class="text-info">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Success Rate</h6>
+                            <h2 class="mb-0">{{ stats.success_rate }}%</h2>
+                        </div>
+                        <div class="text-warning">
+                            <i class="fas fa-trophy fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+
+<div class="container">
+    <div class="row g-4">
+
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Applications by Status</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Status</th>
+                                    <th class="text-center">Count</th>
+                                    <th class="text-center">Percentage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for status in stats.status_breakdown %}
+                                <tr>
+                                    <td>
+                                        <span class="badge rounded-pill
+                                            {% if status.name == 'pending' %}bg-warning text-dark
+                                            {% elif status.name == 'interview' %}bg-info
+                                            {% elif status.name == 'accepted' %}bg-success
+                                            {% elif status.name == 'rejected' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ status.name|capitalize }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">{{ status.count }}</td>
+                                    <td class="text-center">{{ status.percentage }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Top 5 Companies Applied</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Company</th>
+                                    <th class="text-center">Applications</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for company in stats.top_companies %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td><strong>{{ company.name }}</strong></td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary">{{ company.count }}</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Monthly Application Trend</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Month</th>
+                                    <th class="text-center">Applications</th>
+                                    <th class="text-center">Interviews</th>
+                                    <th class="text-center">Offers</th>
+                                    <th>Progress</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for month in stats.monthly_trend %}
+                                <tr>
+                                    <td>{{ month.name }}</td>
+                                    <td class="text-center">{{ month.applications }}</td>
+                                    <td class="text-center">
+                                        <span class="text-info">{{ month.interviews }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="text-success">{{ month.offers }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-warning" role="progressbar"
+                                                 style="width: {{ month.pending_percent }}%">
+                                                {{ month.pending }}
+                                            </div>
+                                            <div class="progress-bar bg-info" role="progressbar"
+                                                 style="width: {{ month.interview_percent }}%">
+                                                {{ month.interviews }}
+                                            </div>
+                                            <font color="#000000">
+                                            <div class="progress-bar bg-success" role="progressbar"
+                                                 style="width: {{ month.offer_percent }}%">
+                                                {{ month.offers }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Key Insights</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6 class="text-muted">Applications this week</h6>
+                            <p class="fs-4">{{ stats.this_week_count }} </p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted">Most Active Day</h6>
+                            <p class="fs-4">{{ stats.most_active_day }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted">Applications This Month</h6>
+                            <p class="fs-4">{{ stats.this_month_count }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
