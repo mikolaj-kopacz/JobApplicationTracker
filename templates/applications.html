@@ -83,38 +83,6 @@
                                     </div>
                                 </td>
                             </tr>
-
-                            <div class="modal fade" id="deleteModal{{ application.id }}" tabindex="-1"
-                                 aria-labelledby="modalLabel{{ application.id }}" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content">
-                                        <div class="modal-header border-0">
-                                            <h5 class="modal-title" id="modalLabel{{ application.id }}">
-                                                <i class="fas fa-exclamation-triangle text-warning me-2"></i>
-                                                Confirm Deletion
-                                            </h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                    aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            Are you sure you want to delete the application for
-                                            <strong>{{ application.position }}</strong> at
-                                            <strong>{{ application.company_name }}</strong>?
-                                            <br>
-                                            <small class="text-muted">This action cannot be undone.</small>
-                                        </div>
-                                        <div class="modal-footer border-0">
-                                            <button type="button" class="btn btn-secondary"
-                                                    data-bs-dismiss="modal">Cancel
-                                            </button>
-                                            <a href="{{ url_for('delete_application', id=application.id) }}"
-                                               class="btn btn-danger">
-                                                <i class="fas fa-trash me-1"></i>Delete
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                             {% endfor %}
                             </tbody>
                         </table>
@@ -134,6 +102,40 @@
         </div>
     </div>
 </div>
+
+{% for application in current_user.applications %}
+<div class="modal fade" id="deleteModal{{ application.id }}" tabindex="-1"
+     aria-labelledby="modalLabel{{ application.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="modalLabel{{ application.id }}">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                    Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete the application for
+                <strong>{{ application.position }}</strong> at
+                <strong>{{ application.company_name }}</strong>?
+                <br>
+                <small class="text-muted">This action cannot be undone.</small>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary"
+                        data-bs-dismiss="modal">Cancel
+                </button>
+                <a href="{{ url_for('delete_application', id=application.id) }}"
+                   class="btn btn-danger">
+                    <i class="fas fa-trash me-1"></i>Delete
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
 
 <div class="container mt-4">
     <div class="row g-3">

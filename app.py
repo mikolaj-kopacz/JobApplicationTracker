@@ -360,6 +360,27 @@ def reset_with_token(token):
     return render_template('reset_with_token.html', token=token)
 
 
+@app.route('/settings', methods=['GET', 'POST'])
+@login_required
+def settings():
+    return render_template('account_settings.html')
+
+
+@app.route('/delete-account/<int:id>', methods=['GET', 'POST'])
+@login_required
+def delete_account(id):
+    if current_user.id == id:
+        if check_password_hash(current_user.password_hash, request.form['password']):
+            db.session.delete(current_user)
+            db.session.commit()
+            logout_user()
+        else:
+            flash("Wrong password", 'danger')
+            return redirect(url_for('settings'))
+    else:
+        flash("You are not authorized to do that", 'danger')
+        return redirect(url_for('settings'))
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000,debug=True)
