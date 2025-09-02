@@ -8,7 +8,8 @@
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
-<body class="flex-grow-1" style="padding-top: 5rem;"> {% include "header.html" %}
+<body class="flex-grow-1" style="padding-top: 5rem;">
+{%block header %}{% include "header.html" %}{% endblock %}
 <main class="content"> {% block content %}{% endblock %}</main>
 {% include "footer.html" %}
 

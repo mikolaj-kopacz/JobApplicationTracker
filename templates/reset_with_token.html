@@ -1,7 +1,7 @@
-{% extends "base.html" %}
-{% block title %} Login {% endblock %}
+{% extends 'base.html' %}
+{% block title %}Reset Password{% endblock %}
+{% block header %}{% endblock %}
 {% block content %}
-
 <div class="d-flex align-items-center justify-content-center" style="min-height: calc(100vh - 160px);">
     <div class="col-md-4">
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -15,39 +15,26 @@
         {% endfor %}
         {% endif %}
         {% endwith %}
-        <div class="card">
+      <div class="card">
             <div class="card-body">
-                <h2 class="card-title text-center mb-4">Login</h2>
+                <h2 class="card-title text-center mb-4">New Password</h2>
 
                 <form method="POST">
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email address</label>
-                        <input type="email" class="form-control" id="email" name="email" required>
-                    </div>
-
                     <div class="mb-3">
                         <label for="password" class="form-label">Password</label>
                         <input type="password" class="form-control" id="password" name="password" required>
                     </div>
-
-                    <div class="mb-3 form-check d-flex align-items-center">
-                        <input type="checkbox" class="form-check-input" id="remember" name="remember">
-                        <label class="form-check-label ms-2" for="remember">
-                            Remember me
-                        </label>
-                        <a href="{{url_for('reset_password') }}" class="ms-auto">Forgot password?</a>
+                    <div class="mb-3">
+                        <label for="repeat_password" class="form-label">Repeat Password</label>
+                        <input type="password" class="form-control" id="repeat_password" name="repeat_password" required>
                     </div>
 
 
-                    <button type="submit" class="btn btn-primary w-100">Sign in</button>
+                    <button type="submit" class="btn btn-primary w-100">Set new password</button>
                 </form>
 
-                <p class="text-center mt-3">
-                    <a href="{{ url_for('register') }}">Create new account</a>
-                </p>
             </div>
         </div>
     </div>
 </div>
-
 {% endblock %}

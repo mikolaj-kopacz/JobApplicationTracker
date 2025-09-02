@@ -1,12 +1,16 @@
-from tkinter.dnd import dnd_start
-
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Integer, String, Text, ForeignKey, DateTime
+from sqlalchemy import Integer, String, Text, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
+import os
+from dotenv import load_dotenv
+from smtplib import SMTP
+from email.mime.text import MIMEText
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
+
 
 app = Flask(__name__)
 login_manager = LoginManager()
@@ -16,14 +20,20 @@ login_manager.init_app(app)
 class Base(DeclarativeBase):
     pass
 
+load_dotenv()
+MAIL_USERNAME = os.environ.get("MAIL_EMAIL")
+MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
+SECRET_KEY = os.environ.get("SECRET_KEY")
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
-app.config['SECRET_KEY'] = "secret123"
+app.config['SECRET_KEY'] = SECRET_KEY
 app.config["REMEMBER_COOKIE_DURATION"] = timedelta(days=15)
 # app.config["REMEMBER_COOKIE_SECURE"] = True
 app.config["REMEMBER_COOKIE_HTTPONLY"] = True
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
+
+serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 
 
 class User(UserMixin, db.Model):
@@ -32,6 +42,7 @@ class User(UserMixin, db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(250), nullable=False)
     email: Mapped[str] = mapped_column(String(250), nullable=False)
+    reset_token_used: Mapped[bool] = mapped_column(Boolean, nullable=False,default=False)
     password_hash: Mapped[str] = mapped_column(String(250), nullable=False)
     applications = relationship("Application", back_populates="user")
 
@@ -276,6 +287,78 @@ def delete_application(id):
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+@app.route('/reset-password', methods=['GET', 'POST'])
+def reset_password():
+    if request.method == "POST":
+        email = request.form.get('email')
+        if db.session.query(User).filter_by(email=email).first():
+            user = User.query.filter_by(email=email).first()
+
+
+            token = serializer.dumps(user.email, salt='password-reset-salt')
+            user.reset_token_used = False
+            reset_link = url_for('reset_with_token', token=token, _external=True)
+            #Encode as utf-8 instead of ascii for diacritics
+            msg = MIMEText(f"""Subject: Reset Your Password
+
+Hi {user.name},
+
+We received a request to reset your password. If you made this request, please click the link below to reset your password:
+
+{reset_link}
+
+If you did not request a password reset, please ignore this email.
+
+Thanks,
+Mikołaj from JobApplicationTracker
+""", "plain", "utf-8")
+            msg["Subject"] = "Reset Your Password"
+            msg["From"] = MAIL_USERNAME
+            msg["To"] = email
+            with SMTP("smtp.gmail.com", 587) as connection:
+                connection.starttls()
+                connection.login(user=MAIL_USERNAME, password=MAIL_PASSWORD)
+                connection.sendmail(MAIL_USERNAME, email, msg.as_string())
+
+            flash("Password reset requested", 'success')
+            return redirect(url_for('login'))
+        else:
+            flash("No email found", 'danger')
+            return redirect(url_for('reset_password'))
+        return redirect(url_for('index'))
+    return render_template('reset-password.html')
+
+
+
+@app.route('/reset/<token>', methods=['GET', 'POST'])
+def reset_with_token(token):
+    try:
+        email = serializer.loads(token, salt='password-reset-salt', max_age=3600)
+    except:
+        flash("Link is invalid or expired", "danger")
+        return redirect(url_for('login'))
+
+    user = User.query.filter_by(email=email).first()
+    if user.reset_token_used:
+        flash("Link has already been used", "danger")
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+
+        if request.form['password'] == request.form['repeat_password']:
+            new_password = request.form['password']
+            user.password_hash = generate_password_hash(new_password)
+            user.reset_token_used = True
+            db.session.commit()
+            flash("Password updated", "success")
+        else:
+            flash("Password doesn't match", "danger")
+            return redirect(url_for(request.endpoint,token=token))
+        return redirect(url_for('login'))
+
+    return render_template('reset_with_token.html', token=token)
+
 
 
 if __name__ == '__main__':
