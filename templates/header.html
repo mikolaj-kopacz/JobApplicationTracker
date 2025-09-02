@@ -13,7 +13,7 @@
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <div class="collapse navbar-collapse" id="navbarCollapse">
+        <div class="collapse navbar-collapse custom-dropdown-bg" id="navbarCollapse">
             <ul class="navbar-nav me-auto mb-2 mb-md-0">
                 <li class="nav-item">
                     <a class="nav-link {% if active_page == 'index' %}active{% endif %}" href="{{ url_for('index') }}">Home</a>
@@ -23,9 +23,9 @@
                 </li>
                 <li class="nav-item">
                     {% if current_user.is_authenticated %}
-                    <a class="nav-link {% if active_page == 'statistics' %}active{% endif %}" href="{{ url_for('statistics') }}">Statistics</a>
+                        <a class="nav-link {% if active_page == 'statistics' %}active{% endif %}" href="{{ url_for('statistics') }}">Statistics</a>
                     {% else %}
-                    <a class="nav-link disabled" href="{{ url_for('statistics') }}">Statistics</a>
+                        <a class="nav-link disabled" href="{{ url_for('statistics') }}">Statistics</a>
                     {% endif %}
                 </li>
             </ul>
@@ -65,9 +65,19 @@
         transition: background-color 0.3s;
         background-color: transparent;
     }
-
     #navbar.scrolled {
         background-color: #0d6efd;
+    }
+
+    @media (max-width: 767px) {
+        .custom-dropdown-bg {
+            background-color: #0d6efd;
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+        .custom-dropdown-bg .nav-link {
+            color: #fff !important;
+        }
     }
 </style>
 
