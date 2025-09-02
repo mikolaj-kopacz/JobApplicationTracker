@@ -3,13 +3,26 @@
 {% block content %}
 
 <div class="container col-xxl-8 px-4 py-5">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show text-center mb-3"
+             role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
   <div class="row flex-lg-row-reverse align-items-center g-5 py-5">
     <div class="col-10 col-sm-8 col-lg-6">
       <img src="{{ url_for('static', filename='images/index-image.jpg') }}"
            class="d-block mx-lg-auto img-fluid"
            alt="Job Applications Illustration" width="700" height="500" loading="lazy">
     </div>
+
     <div class="col-lg-6">
+
       <h1 class="display-5 fw-bold text-body-emphasis lh-1 mb-3">
         Keep Track of Your Job Applications
       </h1>

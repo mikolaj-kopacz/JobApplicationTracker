@@ -57,10 +57,10 @@
         <div class="card mb-4">
             <div class="card-header">Change Name</div>
             <div class="card-body">
-                <form id="changeNameForm">
+                <form method="POST" action="{{ url_for('change_name',id=current_user.id) }}" id="changeNameForm">
                     <div class="mb-3">
                         <label for="nameInput" class="form-label">Name</label>
-                        <input type="text" class="form-control" id="nameInput" placeholder="Enter new name">
+                        <input type="text" class="form-control" name="nameInput" id="nameInput" placeholder="Enter new name">
                     </div>
                     <button type="submit" class="btn btn-primary">Update Name</button>
                 </form>
@@ -70,10 +70,14 @@
         <div class="card mb-4">
             <div class="card-header">Change Email</div>
             <div class="card-body">
-                <form id="changeEmailForm">
+                <form method="POST" action="{{ url_for('change_email',id=current_user.id) }}" id="changeEmailForm">
                     <div class="mb-3">
                         <label for="emailInput" class="form-label">Email address</label>
-                        <input type="email" class="form-control" id="emailInput" placeholder="Enter new email">
+                        <input type="email" class="form-control" name="emailInput" id="emailInput" placeholder="Enter new email">
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" name="password" id="password" placeholder="Password">
                     </div>
                     <button type="submit" class="btn btn-primary">Update Email</button>
                 </form>
@@ -112,7 +116,7 @@
      aria-labelledby="modalLabel{{ current_user.id }}" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <!-- Formularz musi obejmować całą zawartość, która ma być wysłana -->
+
             <form method="POST" action="{{ url_for('delete_account',id=current_user.id) }}">
                 <div class="modal-header border-0">
                     <h5 class="modal-title" id="modalLabel{{ current_user.id }}">
@@ -132,7 +136,6 @@
                 </div>
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <!-- Zamiast linku <a>, użyj przycisku type="submit" -->
                     <button type="submit" class="btn btn-danger">
                         <i class="fas fa-trash me-1"></i>Delete My Account
                     </button>

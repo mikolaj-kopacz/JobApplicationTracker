@@ -43,6 +43,7 @@ class User(UserMixin, db.Model):
     name: Mapped[str] = mapped_column(String(250), nullable=False)
     email: Mapped[str] = mapped_column(String(250), nullable=False)
     reset_token_used: Mapped[bool] = mapped_column(Boolean, nullable=False,default=False)
+    verify_token_used: Mapped[bool] = mapped_column(Boolean, nullable=False,default=False)
     password_hash: Mapped[str] = mapped_column(String(250), nullable=False)
     applications = relationship("Application", back_populates="user")
 
@@ -205,10 +206,37 @@ def register():
         if db.session.query(User).filter_by(email=new_user.email).first():
             flash("Email already registered", 'danger')
             return redirect(url_for('login'))
-        db.session.add(new_user)
-        db.session.commit()
-        login_user(new_user, remember=remember)
-        return redirect(url_for('index'))
+        else:
+            user_data = {
+                "name": new_user.name,
+                "email": new_user.email,
+                "password": new_user.password_hash
+            }
+            token = serializer.dumps(user_data, salt='email-register-confirm-salt')
+            verify_link = url_for('verify_register_with_token', token=token, _external=True)
+            # Encode as utf-8 instead of ascii for diacritics
+            msg = MIMEText(f"""Subject: Reset Your Password
+
+                        Hi {new_user.name},
+
+                        We received a request to register an account. Please click the link below to verify:
+
+                        {verify_link}
+
+                        If you did not try to register, please ignore this email.
+
+                        Thanks,
+                        Mikołaj from JobApplicationTracker
+                        """, "plain", "utf-8")
+            msg["Subject"] = "Verify your email"
+            msg["From"] = MAIL_USERNAME
+            msg["To"] = new_user.email
+            with SMTP("smtp.gmail.com", 587) as connection:
+                connection.starttls()
+                connection.login(user=MAIL_USERNAME, password=MAIL_PASSWORD)
+                connection.sendmail(MAIL_USERNAME, new_user.email, msg.as_string())
+            flash("Email sent, check your inbox", 'success')
+        return redirect(url_for('login'))
     return render_template('register.html', active_page="register")
 
 
@@ -329,8 +357,6 @@ Mikołaj from JobApplicationTracker
         return redirect(url_for('index'))
     return render_template('reset-password.html')
 
-
-
 @app.route('/reset/<token>', methods=['GET', 'POST'])
 def reset_with_token(token):
     try:
@@ -360,6 +386,8 @@ def reset_with_token(token):
     return render_template('reset_with_token.html', token=token)
 
 
+
+
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
@@ -381,6 +409,123 @@ def delete_account(id):
         flash("You are not authorized to do that", 'danger')
         return redirect(url_for('settings'))
     return redirect(url_for('index'))
+
+@app.route('/change-name/<int:id>', methods=['GET', 'POST'])
+@login_required
+def change_name(id):
+    if current_user.id == id:
+        if request.method == 'POST':
+            name = request.form['nameInput']
+            current_user.name = name
+            db.session.commit()
+            flash("Name changed successfully", 'success')
+            return redirect(url_for('settings'))
+    return redirect(url_for('settings'))
+
+
+@app.route('/change-email/<int:id>', methods=['GET', 'POST'])
+@login_required
+def change_email(id):
+    if current_user.id == id:
+        if request.method == 'POST':
+            if db.session.query(User).filter_by(email=request.form['emailInput']).first():
+                flash("Email has already been used", 'danger')
+                return redirect(url_for('settings'))
+            if check_password_hash(current_user.password_hash, request.form['password']):
+                new_email = request.form['emailInput']
+                user = User.query.filter_by(email=current_user.email).first()
+                email_data = {'old_email': current_user.email, 'new_email': new_email}
+                token = serializer.dumps(email_data, salt='email-confirm-salt')
+                user.verify_token_used = False
+                verify_link = url_for('verify_with_token', token=token, _external=True)
+                # Encode as utf-8 instead of ascii for diacritics
+                msg = MIMEText(f"""Subject: Reset Your Password
+
+                Hi {user.name},
+
+                We received a request to change your email. Please click the link below to verify:
+
+                {verify_link}
+
+                If you did not request an email change, please ignore this email.
+
+                Thanks,
+                Mikołaj from JobApplicationTracker
+                """, "plain", "utf-8")
+                msg["Subject"] = "Verify your email"
+                msg["From"] = MAIL_USERNAME
+                msg["To"] = new_email
+                with SMTP("smtp.gmail.com", 587) as connection:
+                    connection.starttls()
+                    connection.login(user=MAIL_USERNAME, password=MAIL_PASSWORD)
+                    connection.sendmail(MAIL_USERNAME, new_email, msg.as_string())
+                flash("Email sent, check your inbox", 'success')
+            else:
+                flash("Wrong password", 'danger')
+    return redirect(url_for('settings'))
+
+
+@app.route('/verify/<token>', methods=['GET', 'POST'])
+def verify_with_token(token):
+    try:
+        email_data = serializer.loads(token, salt='email-confirm-salt', max_age=3600)
+        old_email = email_data['old_email']
+        new_email = email_data['new_email']
+    except (SignatureExpired, BadSignature):
+        flash("The verification link is invalid or has expired.", "danger")
+        return redirect(url_for('index'))
+
+    user = User.query.filter_by(email=old_email).first()
+
+    if not user:
+        flash("User not found.", "danger")
+        return redirect(url_for('index'))
+
+    if user.verify_token_used:
+        flash("Link has already been used", "danger")
+        return redirect(url_for('index'))
+
+    if db.session.query(User).filter_by(email=new_email).first():
+        flash("Email has already been used", "danger")
+        user.logout()
+        return redirect(url_for('login'))
+    else:
+        user.email = new_email
+        user.verify_token_used = True
+        db.session.commit()
+        flash("Your email address has been successfully changed!", 'success')
+        return redirect(url_for('index'))
+
+    return render_template('verify_email.html', token=token)
+
+@app.route('/verify-email/<token>', methods=['GET', 'POST'])
+def verify_register_with_token(token):
+    try:
+        user_data = serializer.loads(token, salt='email-register-confirm-salt', max_age=3600)
+        name = user_data['name']
+        email = user_data['email']
+        password = user_data['password']
+
+        user = User(
+            name=name,
+            email=email,
+            password_hash=password
+        )
+
+    except (SignatureExpired, BadSignature):
+        flash("The verification link is invalid or has expired.", "danger")
+        return redirect(url_for('index'))
+
+    if db.session.query(User).filter_by(email=email).first():
+        flash("Email already registered", "danger")
+    else:
+        db.session.add(user)
+        db.session.commit()
+        flash("Successfully registered!", 'success')
+        return redirect(url_for('login'))
+
+    return render_template('verify_email.html',token=token)
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000,debug=True)
