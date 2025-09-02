@@ -25,7 +25,7 @@ MAIL_USERNAME = os.environ.get("MAIL_EMAIL")
 MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
 SECRET_KEY = os.environ.get("SECRET_KEY")
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL","sqlite:///test.db")
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "sqlite:///posts.db")
 app.config['SECRET_KEY'] = SECRET_KEY
 app.config["REMEMBER_COOKIE_DURATION"] = timedelta(days=15)
 # app.config["REMEMBER_COOKIE_SECURE"] = True
