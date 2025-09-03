@@ -68,10 +68,9 @@ Features include authentication, email verification, password reset, and applica
 ---
 
 ## 📝 Future Improvements
-- Add support for multiple users managing teams
+- Add reminders notifications
 - Export applications to CSV/Excel
 - Dashboard with visual charts
-- Integration with job boards APIs
 
 ---
 
