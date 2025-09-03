@@ -22,12 +22,12 @@ Features include authentication, email verification, password reset, and applica
 ---
 
 ## 🛠️ Tech Stack
-- [Flask](https://flask.palletsprojects.com/)
-- [Flask-Login](https://flask-login.readthedocs.io/)
-- [SQLAlchemy](https://www.sqlalchemy.org/)
-- [Werkzeug Security](https://werkzeug.palletsprojects.com/)
-- [Itsdangerous](https://itsdangerous.palletsprojects.com/) (for secure tokens)
-- [SMTP](https://docs.python.org/3/library/smtplib.html) (for email sending)
+- Flask
+- Flask-Login
+- SQLAlchemy
+- Werkzeug Security
+- Itsdangerous (for secure tokens)
+- SMTP (for email sending)
 - SQLite / PostgreSQL (configurable)
 
 ---
@@ -35,55 +35,49 @@ Features include authentication, email verification, password reset, and applica
 ## ⚙️ Installation
 
 1. Clone the repository:
-   ```bash
    git clone https://github.com/mikolaj-kopacz/JobApplicationTracker.git
    cd JobApplicationTracker
-Create a virtual environment and install dependencies:
 
-bash
-Skopiuj kod
-python -m venv venv
-source venv/bin/activate   # On Windows use: venv\Scripts\activate
-pip install -r requirements.txt
-Create a .env file in the project root and set environment variables:
+2. Create a virtual environment and install dependencies:
+   python -m venv venv
+   source venv/bin/activate   # On Windows use: venv\Scripts\activate
+   pip install -r requirements.txt
 
-ini
-Skopiuj kod
-MAIL_EMAIL=your_email@gmail.com
-MAIL_PASSWORD=your_app_password
-SECRET_KEY=your_secret_key
-DB_URI=sqlite:///posts.db   # or your PostgreSQL connection string
-Initialize the database:
+3. Create a `.env` file in the project root and set environment variables:
+   MAIL_EMAIL=your_email@gmail.com
+   MAIL_PASSWORD=your_app_password
+   SECRET_KEY=your_secret_key
+   DB_URI=sqlite:///posts.db   # or your PostgreSQL connection string
 
-bash
-Skopiuj kod
-flask shell
->>> from main import db
->>> db.create_all()
-Run the app:
+4. Initialize the database:
+   flask shell
+   >>> from main import db
+   >>> db.create_all()
 
-bash
-Skopiuj kod
-python main.py
-📊 Example Statistics
-Application success rates
+5. Run the app:
+   python main.py
 
-Interview percentages
+---
 
-Activity by day of the week
+## 📊 Example Statistics
+- Application success rates
+- Interview percentages
+- Activity by day of the week
+- Monthly application trends
 
-Monthly application trends
+---
 
-📝 Future Improvements
-Add support for multiple users managing teams
+## 📝 Future Improvements
+- Add support for multiple users managing teams
+- Export applications to CSV/Excel
+- Dashboard with visual charts
+- Integration with job boards APIs
 
-Export applications to CSV/Excel
+---
 
-Dashboard with visual charts
+## 📄 License
+This project is licensed under the **MIT License** – feel free to use and modify it.
 
-Integration with job boards APIs
+---
 
-📄 License
-This project is licensed under the MIT License – feel free to use and modify it.
-
-👨‍💻 Created by Mikołaj Kopacz
+👨‍💻 Created by [Mikołaj Kopacz](https://github.com/mikolaj-kopacz)
