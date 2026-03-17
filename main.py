@@ -35,7 +35,7 @@ serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 def send_mail_resend(to_email, subject, body):
     try:
         params = {
-            "from": "onboarding@resend.dev",
+            "from": "JobApplicationTracker <rejestracja@jobapplicationtracker.ovh",
             "to": to_email,
             "subject": subject,
             "text": body,
