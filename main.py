@@ -235,7 +235,7 @@ def register():
                     connection.starttls()
                     connection.login(user=MAIL_USERNAME, password=MAIL_PASSWORD)
                     connection.sendmail(MAIL_USERNAME, new_user.email, msg.as_string())
-                    flash("Email sent, check your inbox", 'success')
+                flash("Email sent, check your inbox", 'success')
             except Exception as e:
                 print(f"Błąd wysyłania maila: {e}")
                 flash("Failed to send email.", 'danger')
