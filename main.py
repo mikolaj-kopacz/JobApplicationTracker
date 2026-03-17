@@ -33,8 +33,7 @@ app.config["REMEMBER_COOKIE_HTTPONLY"] = True
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
 
-with app.app_context():
-    db.create_all()
+
 
 serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 
@@ -69,7 +68,8 @@ class Application(db.Model):
 
     user = relationship("User", back_populates="applications")
 
-
+with app.app_context():
+    db.create_all()
         
 
 @login_manager.user_loader
