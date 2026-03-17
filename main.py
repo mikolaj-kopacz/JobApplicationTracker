@@ -7,37 +7,43 @@ from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from dotenv import load_dotenv
-from smtplib import SMTP, SMTP_SSL
-from email.mime.text import MIMEText
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
-import ssl
-
+import resend
+import calendar
+from collections import Counter
 
 app = Flask(__name__)
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-
 class Base(DeclarativeBase):
     pass
 
 load_dotenv()
-MAIL_USERNAME = os.environ.get("MAIL_EMAIL")
-MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD")
 SECRET_KEY = os.environ.get("SECRET_KEY")
+resend.api_key = os.environ.get("RESEND_API_KEY")
 
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "sqlite:///posts.db")
 app.config['SECRET_KEY'] = SECRET_KEY
 app.config["REMEMBER_COOKIE_DURATION"] = timedelta(days=15)
-# app.config["REMEMBER_COOKIE_SECURE"] = True
 app.config["REMEMBER_COOKIE_HTTPONLY"] = True
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
 
-
-
 serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 
+def send_mail_resend(to_email, subject, body):
+    try:
+        params = {
+            "from": "onboarding@resend.dev",
+            "to": to_email,
+            "subject": subject,
+            "text": body,
+        }
+        resend.Emails.send(params)
+        return True
+    except Exception:
+        return False
 
 class User(UserMixin, db.Model):
     __tablename__ = 'user'
@@ -45,11 +51,10 @@ class User(UserMixin, db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(250), nullable=False)
     email: Mapped[str] = mapped_column(String(250), nullable=False)
-    reset_token_used: Mapped[bool] = mapped_column(Boolean, nullable=False,default=False)
-    verify_token_used: Mapped[bool] = mapped_column(Boolean, nullable=False,default=False)
+    reset_token_used: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    verify_token_used: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     password_hash: Mapped[str] = mapped_column(String(250), nullable=False)
     applications = relationship("Application", back_populates="user")
-
 
 class Application(db.Model):
     __tablename__ = 'application'
@@ -64,37 +69,30 @@ class Application(db.Model):
     salary: Mapped[str] = mapped_column(String(100), nullable=True)
     notes: Mapped[str] = mapped_column(Text, nullable=True)
     job_url: Mapped[str] = mapped_column(String(500), nullable=True)
-
     user_id: Mapped[int] = mapped_column(Integer, ForeignKey('user.id'), nullable=False)
-
     user = relationship("User", back_populates="applications")
 
 with app.app_context():
     db.create_all()
-        
 
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, user_id)
 
-
 @app.route('/')
 def index():
     return render_template('index.html', active_page="index")
-
 
 @app.route('/statistics')
 @login_required
 def statistics():
     user_applications = Application.query.filter_by(user_id=current_user.id).all()
-
     total = len(user_applications)
-
     status_counts = {}
-    for app in user_applications:
-        status_counts[app.status] = status_counts.get(app.status, 0) + 1
+    for app_item in user_applications:
+        status_counts[app_item.status] = status_counts.get(app_item.status, 0) + 1
 
-    responded = sum(1 for app in user_applications if app.status != 'pending')
+    responded = sum(1 for app_item in user_applications if app_item.status != 'pending')
     interviews = status_counts.get('interview', 0)
     accepted = status_counts.get('accepted', 0)
 
@@ -111,29 +109,24 @@ def statistics():
             'percentage': percentage
         })
 
-
-    from collections import Counter
-    company_counts = Counter(app.company_name for app in user_applications)
+    company_counts = Counter(app_item.company_name for app_item in user_applications)
     top_companies = [{'name': company, 'count': count}
                      for company, count in company_counts.most_common(5)]
 
-    from datetime import datetime, timedelta
     monthly_trend = []
-
     for i in range(3):
         month_start = datetime.now().replace(day=1) - timedelta(days=30 * i)
         month_name = month_start.strftime('%B %Y')
-
-        month_apps = [app for app in user_applications
-                      if app.date_applied.month == month_start.month
-                      and app.date_applied.year == month_start.year]
+        month_apps = [app_item for app_item in user_applications
+                      if app_item.date_applied.month == month_start.month
+                      and app_item.date_applied.year == month_start.year]
 
         month_data = {
             'name': month_name,
             'applications': len(month_apps),
-            'interviews': sum(1 for app in month_apps if app.status == 'interview'),
-            'offers': sum(1 for app in month_apps if app.status == 'accepted'),
-            'pending': sum(1 for app in month_apps if app.status == 'pending'),
+            'interviews': sum(1 for app_item in month_apps if app_item.status == 'interview'),
+            'offers': sum(1 for app_item in month_apps if app_item.status == 'accepted'),
+            'pending': sum(1 for app_item in month_apps if app_item.status == 'pending'),
         }
 
         if month_data['applications'] > 0:
@@ -147,17 +140,14 @@ def statistics():
 
         monthly_trend.append(month_data)
 
-    import calendar
-    from collections import Counter
-
-    weekdays = [calendar.day_name[app.date_applied.weekday()] for app in user_applications]
+    weekdays = [calendar.day_name[app_item.date_applied.weekday()] for app_item in user_applications]
     most_active_day = Counter(weekdays).most_common(1)[0][0] if weekdays else 'N/A'
 
     current_month = datetime.now().month
-    this_month_count = sum(1 for app in user_applications if app.date_applied.month == current_month)
+    this_month_count = sum(1 for app_item in user_applications if app_item.date_applied.month == current_month)
 
-    this_week_count = sum(1 for app in user_applications
-                          if app.date_applied.date() >= datetime.now().date() - timedelta(days=7))
+    this_week_count = sum(1 for app_item in user_applications
+                          if app_item.date_applied.date() >= datetime.now().date() - timedelta(days=7))
 
     stats = {
         'total': total,
@@ -173,7 +163,6 @@ def statistics():
     }
 
     return render_template('statistics.html', stats=stats, active_page="statistics")
-
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -193,66 +182,39 @@ def login():
             return redirect(url_for('login'))
     return render_template('login.html', active_page="login")
 
-
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
         return url_for('index')
     if request.method == "POST":
-        new_user = User(
-            name=request.form['name'],
-            email=request.form['email'],
-            password_hash=generate_password_hash(request.form['password'], salt_length=8)
-        )
-        remember = request.form.get('remember')
-        if db.session.query(User).filter_by(email=new_user.email).first():
+        email = request.form['email']
+        if db.session.query(User).filter_by(email=email).first():
             flash("Email already registered", 'danger')
             return redirect(url_for('login'))
         else:
             user_data = {
-                "name": new_user.name,
-                "email": new_user.email,
-                "password": new_user.password_hash
+                "name": request.form['name'],
+                "email": email,
+                "password": generate_password_hash(request.form['password'], salt_length=8)
             }
             token = serializer.dumps(user_data, salt='email-register-confirm-salt')
             verify_link = url_for('verify_register_with_token', token=token, _external=True)
-            # Encode as utf-8 instead of ascii for diacritics
-            msg = MIMEText(f"""Subject: Reset Your Password
-
-                        Hi {new_user.name},
-
-                        We received a request to register an account. Please click the link below to verify:
-
-                        {verify_link}
-
-                        If you did not try to register, please ignore this email.
-
-                        Thanks,
-                        Mikołaj from JobApplicationTracker
-                        """, "plain", "utf-8")
-            msg["Subject"] = "Verify your email"
-            msg["From"] = MAIL_USERNAME
-            msg["To"] = new_user.email
-
-            context = ssl.create_default_context()
             
-            try:
-                with SMTP_SSL("smtp.gmail.com", 465, context=context, timeout=15) as connection:
-                    connection.login(user=MAIL_USERNAME, password=MAIL_PASSWORD)
-                    connection.sendmail(MAIL_USERNAME, new_user.email, msg.as_string())
+            subject = "Verify your email"
+            body = f"Hi {user_data['name']},\n\nWe received a request to register an account. Please click the link below to verify:\n\n{verify_link}\n\nIf you did not try to register, please ignore this email.\n\nThanks,\nMikołaj from JobApplicationTracker"
+            
+            if send_mail_resend(email, subject, body):
                 flash("Email sent, check your inbox", 'success')
-            except Exception as e:
-                print(f"Błąd wysyłania maila: {e}")
+            else:
                 flash("Failed to send email.", 'danger')
-                
         return redirect(url_for('login'))
     return render_template('register.html', active_page="register")
 
-
 @app.route('/applications', methods=['GET', 'POST'])
+@login_required
 def applications():
-    return render_template('applications.html', active_page="applications", applications=Application.query.all())
-
+    user_applications = Application.query.filter_by(user_id=current_user.id).all()
+    return render_template('applications.html', active_page="applications", applications=user_applications)
 
 @app.route('/add-application', methods=['GET', 'POST'])
 def add_application():
@@ -279,7 +241,6 @@ def add_application():
 
             db.session.add(new_application)
             db.session.commit()
-
             return redirect(url_for('applications'))
 
         except Exception as e:
@@ -288,16 +249,13 @@ def add_application():
             return redirect(url_for('add_application'))
     return render_template('add_application.html')
 
-
 @app.route('/edit-application/<int:id>', methods=['GET', 'POST'])
 def edit_application(id):
     if not current_user.is_authenticated:
         flash("You need to be logged in to edit an existing application", 'danger')
         return redirect(url_for('login'))
     application = Application.query.get(id)
-
     return render_template("edit_application.html", application=application)
-
 
 @app.route('/applications/<int:id>', methods=['GET', 'POST'])
 def view_application(id):
@@ -306,7 +264,6 @@ def view_application(id):
         return redirect(url_for('login'))
     application = Application.query.get(id)
     return render_template("view_application.html", application=application)
-
 
 @app.route('/delete-application/<int:id>', methods=['GET', 'POST'])
 def delete_application(id):
@@ -318,7 +275,6 @@ def delete_application(id):
     db.session.commit()
     return redirect(url_for('applications'))
 
-
 @app.route('/logout')
 @login_required
 def logout():
@@ -329,41 +285,24 @@ def logout():
 def reset_password():
     if request.method == "POST":
         email = request.form.get('email')
-        if db.session.query(User).filter_by(email=email).first():
-            user = User.query.filter_by(email=email).first()
-
-
+        user = db.session.query(User).filter_by(email=email).first()
+        if user:
             token = serializer.dumps(user.email, salt='password-reset-salt')
             user.reset_token_used = False
+            db.session.commit()
             reset_link = url_for('reset_with_token', token=token, _external=True)
-            #Encode as utf-8 instead of ascii for diacritics
-            msg = MIMEText(f"""Subject: Reset Your Password
-
-Hi {user.name},
-
-We received a request to reset your password. If you made this request, please click the link below to reset your password:
-
-{reset_link}
-
-If you did not request a password reset, please ignore this email.
-
-Thanks,
-Mikołaj from JobApplicationTracker
-""", "plain", "utf-8")
-            msg["Subject"] = "Reset Your Password"
-            msg["From"] = MAIL_USERNAME
-            msg["To"] = email
-            with SMTP("smtp.gmail.com", 587) as connection:
-                connection.starttls()
-                connection.login(user=MAIL_USERNAME, password=MAIL_PASSWORD)
-                connection.sendmail(MAIL_USERNAME, email, msg.as_string())
-
-            flash("Password reset requested", 'success')
+            
+            subject = "Reset Your Password"
+            body = f"Hi {user.name},\n\nWe received a request to reset your password. If you made this request, please click the link below to reset your password:\n\n{reset_link}\n\nIf you did not request a password reset, please ignore this email.\n\nThanks,\nMikołaj from JobApplicationTracker"
+            
+            if send_mail_resend(email, subject, body):
+                flash("Password reset requested", 'success')
+            else:
+                flash("Failed to send email.", 'danger')
             return redirect(url_for('login'))
         else:
             flash("No email found", 'danger')
             return redirect(url_for('reset_password'))
-        return redirect(url_for('index'))
     return render_template('reset-password.html')
 
 @app.route('/reset/<token>', methods=['GET', 'POST'])
@@ -380,7 +319,6 @@ def reset_with_token(token):
         return redirect(url_for('login'))
 
     if request.method == 'POST':
-
         if request.form['password'] == request.form['repeat_password']:
             new_password = request.form['password']
             user.password_hash = generate_password_hash(new_password)
@@ -389,19 +327,15 @@ def reset_with_token(token):
             flash("Password updated", "success")
         else:
             flash("Password doesn't match", "danger")
-            return redirect(url_for(request.endpoint,token=token))
+            return redirect(url_for(request.endpoint, token=token))
         return redirect(url_for('login'))
 
     return render_template('reset_with_token.html', token=token)
-
-
-
 
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
     return render_template('account_settings.html')
-
 
 @app.route('/delete-account/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -431,7 +365,6 @@ def change_name(id):
             return redirect(url_for('settings'))
     return redirect(url_for('settings'))
 
-
 @app.route('/change-email/<int:id>', methods=['GET', 'POST'])
 @login_required
 def change_email(id):
@@ -446,33 +379,19 @@ def change_email(id):
                 email_data = {'old_email': current_user.email, 'new_email': new_email}
                 token = serializer.dumps(email_data, salt='email-confirm-salt')
                 user.verify_token_used = False
+                db.session.commit()
                 verify_link = url_for('verify_with_token', token=token, _external=True)
-                # Encode as utf-8 instead of ascii for diacritics
-                msg = MIMEText(f"""Subject: Reset Your Password
-
-                Hi {user.name},
-
-                We received a request to change your email. Please click the link below to verify:
-
-                {verify_link}
-
-                If you did not request an email change, please ignore this email.
-
-                Thanks,
-                Mikołaj from JobApplicationTracker
-                """, "plain", "utf-8")
-                msg["Subject"] = "Verify your email"
-                msg["From"] = MAIL_USERNAME
-                msg["To"] = new_email
-                with SMTP("smtp.gmail.com", 587) as connection:
-                    connection.starttls()
-                    connection.login(user=MAIL_USERNAME, password=MAIL_PASSWORD)
-                    connection.sendmail(MAIL_USERNAME, new_email, msg.as_string())
-                flash("Email sent, check your inbox", 'success')
+                
+                subject = "Verify your email"
+                body = f"Hi {user.name},\n\nWe received a request to change your email. Please click the link below to verify:\n\n{verify_link}\n\nIf you did not request an email change, please ignore this email.\n\nThanks,\nMikołaj from JobApplicationTracker"
+                
+                if send_mail_resend(new_email, subject, body):
+                    flash("Email sent, check your inbox", 'success')
+                else:
+                    flash("Failed to send email.", 'danger')
             else:
                 flash("Wrong password", 'danger')
     return redirect(url_for('settings'))
-
 
 @app.route('/verify/<token>', methods=['GET', 'POST'])
 def verify_with_token(token):
@@ -496,7 +415,7 @@ def verify_with_token(token):
 
     if db.session.query(User).filter_by(email=new_email).first():
         flash("Email has already been used", "danger")
-        user.logout()
+        logout_user()
         return redirect(url_for('login'))
     else:
         user.email = new_email
@@ -505,8 +424,6 @@ def verify_with_token(token):
         flash("Your email address has been successfully changed!", 'success')
         return redirect(url_for('index'))
 
-    return render_template('verify_email.html', token=token)
-
 @app.route('/verify-email/<token>', methods=['GET', 'POST'])
 def verify_register_with_token(token):
     try:
@@ -514,13 +431,6 @@ def verify_register_with_token(token):
         name = user_data['name']
         email = user_data['email']
         password = user_data['password']
-
-        user = User(
-            name=name,
-            email=email,
-            password_hash=password
-        )
-
     except (SignatureExpired, BadSignature):
         flash("The verification link is invalid or has expired.", "danger")
         return redirect(url_for('index'))
@@ -528,14 +438,17 @@ def verify_register_with_token(token):
     if db.session.query(User).filter_by(email=email).first():
         flash("Email already registered", "danger")
     else:
+        user = User(
+            name=name,
+            email=email,
+            password_hash=password
+        )
         db.session.add(user)
         db.session.commit()
         flash("Successfully registered!", 'success')
         return redirect(url_for('login'))
 
-    return render_template('verify_email.html',token=token)
-
-
+    return render_template('verify_email.html', token=token)
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000,debug=False)
+    app.run(host="0.0.0.0", port=5000, debug=False)
