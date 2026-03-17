@@ -33,6 +33,9 @@ app.config["REMEMBER_COOKIE_HTTPONLY"] = True
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
 
+with app.app_context():
+    db.create_all()
+
 serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
 
 
@@ -67,7 +70,7 @@ class Application(db.Model):
     user = relationship("User", back_populates="applications")
 
 
-
+        
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -531,8 +534,6 @@ def verify_register_with_token(token):
     return render_template('verify_email.html',token=token)
 
 
-if __name__ == '__main__':
 
-    with app.app_context():
-        db.create_all()
-        print("Tabele w bazie danych zostały sprawdzone/utworzone.")
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=5000,debug=False)
