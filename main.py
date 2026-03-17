@@ -231,11 +231,16 @@ def register():
             msg["Subject"] = "Verify your email"
             msg["From"] = MAIL_USERNAME
             msg["To"] = new_user.email
-            with SMTP("smtp.gmail.com", 587) as connection:
-                connection.starttls()
-                connection.login(user=MAIL_USERNAME, password=MAIL_PASSWORD)
-                connection.sendmail(MAIL_USERNAME, new_user.email, msg.as_string())
-            flash("Email sent, check your inbox", 'success')
+            
+            try:
+                with smtplib.SMTP_SSL("smtp.gmail.com", 465) as connection:
+                    connection.login(user=MAIL_USERNAME, password=MAIL_PASSWORD)
+                    connection.sendmail(MAIL_USERNAME, new_user.email, msg.as_string())
+                flash("Email sent, check your inbox", 'success')
+            except Exception as e:
+                print(f"Błąd wysyłania maila: {e}")
+                flash("Failed to send email.", 'danger')
+                
         return redirect(url_for('login'))
     return render_template('register.html', active_page="register")
 
