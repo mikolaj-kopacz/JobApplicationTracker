@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from dotenv import load_dotenv
-from smtplib import SMTP
+from smtplib import SMTP, SMTP_SSL
 from email.mime.text import MIMEText
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 
@@ -233,7 +233,7 @@ def register():
             msg["To"] = new_user.email
             
             try:
-                with smtplib.SMTP_SSL("smtp.gmail.com", 465) as connection:
+                with SMTP_SSL("smtp.gmail.com", 465) as connection:
                     connection.login(user=MAIL_USERNAME, password=MAIL_PASSWORD)
                     connection.sendmail(MAIL_USERNAME, new_user.email, msg.as_string())
                 flash("Email sent, check your inbox", 'success')
