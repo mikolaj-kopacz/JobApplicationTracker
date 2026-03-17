@@ -7,9 +7,10 @@ from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from dotenv import load_dotenv
-from smtplib import SMTP
+from smtplib import SMTP, SMTP_SSL
 from email.mime.text import MIMEText
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
+import ssl
 
 
 app = Flask(__name__)
@@ -232,13 +233,11 @@ def register():
             msg["Subject"] = "Verify your email"
             msg["From"] = MAIL_USERNAME
             msg["To"] = new_user.email
-            flash("Sending")
+
+            context = ssl.create_default_context()
             
             try:
-                flash("Still sending")
-                with SMTP("smtp.gmail.com", 587) as connection:
-                    flash("Sendiiiing")
-                    connection.starttls()
+                with SMTP_SSL("smtp.gmail.com", 465, context=context, timeout=15) as connection:
                     connection.login(user=MAIL_USERNAME, password=MAIL_PASSWORD)
                     connection.sendmail(MAIL_USERNAME, new_user.email, msg.as_string())
                 flash("Email sent, check your inbox", 'success')
