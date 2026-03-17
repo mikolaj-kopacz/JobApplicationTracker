@@ -67,8 +67,6 @@ class Application(db.Model):
     user = relationship("User", back_populates="applications")
 
 
-with app.app_context():
-    db.create_all()
 
 
 @login_manager.user_loader
@@ -534,4 +532,7 @@ def verify_register_with_token(token):
 
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000,debug=False)
+
+    with app.app_context():
+        db.create_all()
+        print("Tabele w bazie danych zostały sprawdzone/utworzone.")
