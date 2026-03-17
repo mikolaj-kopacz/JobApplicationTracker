@@ -232,9 +232,12 @@ def register():
             msg["Subject"] = "Verify your email"
             msg["From"] = MAIL_USERNAME
             msg["To"] = new_user.email
+            flash("Sending")
             
             try:
+                flash("Still sending")
                 with SMTP("smtp.gmail.com", 587) as connection:
+                    flash("Sendiiiing")
                     connection.starttls()
                     connection.login(user=MAIL_USERNAME, password=MAIL_PASSWORD)
                     connection.sendmail(MAIL_USERNAME, new_user.email, msg.as_string())
